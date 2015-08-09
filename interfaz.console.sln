@@ -1,10 +1,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.22823.1
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "interfaz.console", "interfaz.console.csproj", "{72D85773-806F-455D-B7D4-B1ACE241D2A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "interfaz.console.despachos", "..\interfaz.console.despachos\interfaz.console.despachos.csproj", "{5A764072-3EBF-4C46-88A2-D2469A9F23E2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "interfaz.console.despachos", "interfaz.console.despachos\interfaz.console.despachos.csproj", "{5A764072-3EBF-4C46-88A2-D2469A9F23E2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
