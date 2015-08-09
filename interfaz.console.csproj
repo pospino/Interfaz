@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <ProjectGuid>{72D85773-806F-455D-B7D4-B1ACE241D2A7}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <AssemblyName>interfaz.console</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>interfaz</RootNamespace>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <Optimize>false</Optimize>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>false</DebugSymbols>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>pdbonly</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="FluentData">
+      <HintPath>packages\FluentData.3.0.1.0\lib\FluentData.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Configuration" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <AutoGen>false</AutoGen>
+      <DesignTimeSharedInput>false</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="console\Database.cs">
+      <AutoGen>false</AutoGen>
+      <DesignTimeSharedInput>false</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="console\Pagos.cs">
+      <AutoGen>false</AutoGen>
+      <DesignTimeSharedInput>false</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="console\Program.cs">
+      <AutoGen>false</AutoGen>
+      <DesignTimeSharedInput>false</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="console\Pedidos.cs">
+      <AutoGen>false</AutoGen>
+      <DesignTimeSharedInput>false</DesignTimeSharedInput>
+    </Compile>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
