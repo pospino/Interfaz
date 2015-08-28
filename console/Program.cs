@@ -17,38 +17,42 @@ namespace interfaz.console
 
 		public static void ConvertirAArchivo<T>(List<T> Objetos, TextWriter w)
 		{
-			string item = "";
-			PropertyInfo[] properties = Objetos[0].GetType().GetProperties();
-			foreach (T objeto in Objetos)
-			{
-				object obj = objeto;
-				StringBuilder stringBuilder = new StringBuilder();
-				PropertyInfo[] propertyInfoArray = properties;
-				for (int i = 0; i < (int)propertyInfoArray.Length; i++)
-				{
-					PropertyInfo propertyInfo = propertyInfoArray[i];
-					if (propertyInfo.Name != "flete")
-					{
-						stringBuilder.Append(item);
-						if (propertyInfo.PropertyType == typeof(DateTime))
-						{
-							DateTime value = (DateTime)propertyInfo.GetValue(obj, new object[0]);
-							stringBuilder.Append(value.ToString("yyyy-MM-dd"));
-						}
-						else if (!(propertyInfo.PropertyType == typeof(double)))
-						{
-							stringBuilder.Append(propertyInfo.GetValue(obj, new object[0]));
-						}
-						else
-						{
-							stringBuilder.Append(propertyInfo.GetValue(obj, new object[0]).ToString().Replace(',', '.'));
-						}
-						item = ConfigurationManager.AppSettings["separador"];
-					}
-				}
-				item = "";
-				w.WriteLine(stringBuilder.ToString());
-			}
+      if (Objetos.Count > 0)
+      {
+        string item = "";
+
+        PropertyInfo[] properties = Objetos[0].GetType().GetProperties();
+        foreach (T objeto in Objetos)
+        {
+          object obj = objeto;
+          StringBuilder stringBuilder = new StringBuilder();
+          PropertyInfo[] propertyInfoArray = properties;
+          for (int i = 0; i < (int)propertyInfoArray.Length; i++)
+          {
+            PropertyInfo propertyInfo = propertyInfoArray[i];
+            if (propertyInfo.Name != "flete")
+            {
+              stringBuilder.Append(item);
+              if (propertyInfo.PropertyType == typeof(DateTime))
+              {
+                DateTime value = (DateTime)propertyInfo.GetValue(obj, new object[0]);
+                stringBuilder.Append(value.ToString("yyyy-MM-dd"));
+              }
+              else if (!(propertyInfo.PropertyType == typeof(double)))
+              {
+                stringBuilder.Append(propertyInfo.GetValue(obj, new object[0]));
+              }
+              else
+              {
+                stringBuilder.Append(propertyInfo.GetValue(obj, new object[0]).ToString().Replace(',', '.'));
+              }
+              item = ConfigurationManager.AppSettings["separador"];
+            }
+          }
+          item = "";
+          w.WriteLine(stringBuilder.ToString());
+        }
+      }
 		}
 
 		public static void GenerarArchivo(string logMessage, TextWriter w)
@@ -70,7 +74,8 @@ namespace interfaz.console
 			StreamWriter streamWriter;
 			DateTime now = DateTime.Now;
 			string str = string.Concat(now.ToString("yyyyMMdd"), ".txt");
-			StreamWriter streamWriter1 = File.AppendText(string.Concat("log", str));
+			StreamWriter streamWriter1 = File.AppendText(
+        string.Concat(ConfigurationManager.AppSettings["Carpeta"],"log", str));
 			try
 			{
 				try
@@ -83,9 +88,9 @@ namespace interfaz.console
 						List<Pagos> pagos = database.getPagos();
 						count = pagos.Count;
 						Program.Log(string.Concat("Se ejecuto la consulta de pagos, se obtuvieron ", count, " registros."), streamWriter1);
-						if (count != 0)
+						//if (count != 0)
 						{
-							streamWriter = File.AppendText(string.Concat("pagos", str));
+							streamWriter = File.AppendText(string.Concat(ConfigurationManager.AppSettings["Carpeta"],"pagos", str));
 							try
 							{
 								Program.ConvertirAArchivo<Pagos>(pagos, streamWriter);
@@ -93,7 +98,7 @@ namespace interfaz.console
 								streamWriter.Flush();
 								streamWriter.Close();
 								streamWriter.Dispose();
-								Program.SendFTP(string.Concat("pagos", str), streamWriter1);
+								Program.SendFTP(string.Concat( "pagos", str), streamWriter1);
 							}
 							finally
 							{
@@ -118,9 +123,9 @@ namespace interfaz.console
 						List<Pedidos> pedidos = database.getPedidos();
 						count = pedidos.Count;
 						Program.Log(string.Concat("Se ejecuto la consulta de Pedidos, se obtuvieron ", count, " registros."), streamWriter1);
-						if (count != 0)
+						//if (count != 0)
 						{
-							streamWriter = File.AppendText(string.Concat("pedidos", str));
+							streamWriter = File.AppendText(string.Concat(ConfigurationManager.AppSettings["Carpeta"],"pedidos", str));
 							try
 							{
 								Program.ConvertirAArchivo<Pedidos>(pedidos, streamWriter);
@@ -136,7 +141,7 @@ namespace interfaz.console
 									((IDisposable)streamWriter).Dispose();
 								}
 							}
-							Program.SendFTP(string.Concat("pedidos", str), streamWriter1);
+							Program.SendFTP(string.Concat( "pedidos", str), streamWriter1);
 						}
 					}
 					finally
@@ -176,7 +181,7 @@ namespace interfaz.console
 				networkCredential.KeepAlive = true;
 				networkCredential.UseBinary = true;
 				networkCredential.Method = "STOR";
-				FileStream fileStream = File.OpenRead(pFile);
+				FileStream fileStream = File.OpenRead(ConfigurationManager.AppSettings["Carpeta"]+ pFile);
 				byte[] numArray = new byte[fileStream.Length];
 				fileStream.Read(numArray, 0, (int)numArray.Length);
 				fileStream.Close();

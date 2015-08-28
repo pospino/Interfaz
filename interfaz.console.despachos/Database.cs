@@ -1,13 +1,10 @@
 using FluentData;
 using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Configuration;
-using System.Linq;
 
 namespace interfaz.console
 {
-	public class Database : IDisposable
+  public class Database : IDisposable
 	{
     
 		private static IDbContext context;

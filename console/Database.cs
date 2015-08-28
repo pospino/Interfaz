@@ -42,9 +42,18 @@ namespace interfaz.console
 
 		public List<Pagos> getPagos()
 		{
-			string str = " SELECT DATE( op.date_add ) fdoc, DATE( NOW( ) ) fcon, id_cart AS oc,    DATE( op.date_add ) fvalor, o.total_paid_tax_incl neto,   concat(firstname,' ',lastname) nombre, dni cedula   FROM ps_orders o   INNER JOIN ps_address a ON a.id_customer = o.id_customer  AND o.id_address_delivery = a.id_address  INNER JOIN ps_order_payment op ON o.reference = op.order_reference   WHERE current_state  IN ( 2, 3, 4, 5 )  AND date(o.date_add) = DATE_ADD(date(now()),INTERVAL @dias day) ";
+      DateTime now ;
+      now = DateTime.Now.AddDays(double.Parse(ConfigurationManager.AppSettings["DiasPagos"]));
+			string str = " SELECT DATE( op.date_add ) fdoc, DATE( NOW( ) ) fcon, id_cart AS oc,  "+
+        "  DATE( op.date_add ) fvalor, o.total_paid_tax_incl neto,  "+
+        " concat(firstname,' ',lastname) nombre, dni cedula  "+
+        " FROM ps_orders o   INNER JOIN ps_address a ON a.id_customer = o.id_customer "+
+        " AND o.id_address_delivery = a.id_address "+
+        " INNER JOIN ps_order_payment op ON o.reference = op.order_reference "+
+        "  WHERE current_state  IN ( 2, 3, 4, 5 ) "+
+        " AND date(o.date_add) = date(@dia) ";
 			List<Pagos> pagos = Database.Context.Sql(str, new object[0])
-                .Parameter("dias", ConfigurationManager.AppSettings["DiasPagos"])
+                .Parameter("dia", now,parameterType: DataTypes.Date)
                 .QueryMany<Pagos>(null);
 			return pagos;
 		}
@@ -55,7 +64,8 @@ namespace interfaz.console
 			Pedidos pedido;
 			string[] strArrays;
 			int num;
-			string str1 = 
+      DateTime now = DateTime.Now.AddDays(double.Parse(ConfigurationManager.AppSettings["DiasPedidos"]));
+      string str1 = 
                 " SELECT o.id_cart 'reference',  'Z029' clasepedido,  'CO19'ov,  'EC'cdistribucion,  'PD'sector,  "+
                 " 'PN'timpuesto,   'CC'tidentificacion, CONCAT( a.firstname,  ' ', a.lastname ) nombre, a.address1, 'CO' pais, "+
                 " a.city,  'COP'moneda,  a.dni identificacion,'' codigo,  0 posicion, p.reference material,  'CO24' centro, "+
@@ -65,9 +75,10 @@ namespace interfaz.console
                 " INNER JOIN ps_country_lang cl ON a.id_country = cl.id_country AND cl.id_lang =1  "+
                 " INNER JOIN ps_order_detail od ON o.id_order = od.id_order "+
                 " INNER JOIN ps_product p ON p.id_product = od.product_id "+
-                " WHERE o.current_state IN ( 12, 2 )   AND date(o.date_add) = DATE_ADD(date(now()),INTERVAL @dias day) ";
+                " WHERE o.current_state IN ( 12, 2 )   "+
+                " AND date(o.date_add) = date(@dias) ";
 			List<Pedidos> pedidos = Database.Context.Sql(str1, new object[0])
-                .Parameter("dias", ConfigurationManager.AppSettings["DiasPedidos"])
+                .Parameter("dias", now,parameterType: DataTypes.Date)
                 .QueryMany<Pedidos>(null);
 			List<Pedidos> pedidos1 = new List<Pedidos>();
             string sql_referencia = " SELECT price FROM  `ps_product` WHERE reference =  @referencia ";

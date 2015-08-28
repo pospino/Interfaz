@@ -17,7 +17,7 @@ namespace interfaz.console.despachos
     static NameValueCollection conf = ConfigurationManager.AppSettings;
     public static void setStatus(Despacho ent,StreamWriter w)
     {
-      Uri address = new Uri("http://test.diabetrics.tienda/ChangeStatus.php");
+      Uri address = new Uri("https://www.diabetrics.tienda/ChangeStatus.php");
 
       HttpWebRequest request = WebRequest.Create(address) as HttpWebRequest;
       request.Method = "POST";
@@ -33,9 +33,7 @@ namespace interfaz.console.despachos
         data.Append("&shipping=" + HttpUtility.UrlEncode(ent.Guia));
       if (!string.IsNullOrEmpty(ent.Factura_SAP))
         data.Append("&invoice=" + HttpUtility.UrlEncode(ent.Factura_SAP));
-      if (!string.IsNullOrEmpty(ent.Fecha_Envio))
-        data.Append("&fdeliver=" + HttpUtility.UrlEncode(ent.Factura_SAP));
-
+      
 
 
 
@@ -58,7 +56,7 @@ namespace interfaz.console.despachos
         StreamReader reader = new StreamReader(response.GetResponseStream());
 
         // Console application output  
-        Log(reader.ReadToEnd(),w);
+        Log(reader.ReadToEnd(), w);
       }
 
 
@@ -74,25 +72,67 @@ namespace interfaz.console.despachos
     {
       string Fechastr = DateTime.Now.ToString("yyyyMMdd")+ ".txt";
       string logfile = string.Concat("log", Fechastr );
-      using (System.IO.StreamWriter w = File.AppendText(logfile))
+      using (System.IO.StreamWriter w = File.AppendText(conf["Carpeta"]+ logfile))
       {
-        Log("Inicio", w);
+        #region despacho
+        Log("Inicio lectura de archivo de despachos.", w);
         Database database = new Database();
         string despacho_file = "despachos" + Fechastr;
         Program.Log("Buscando Archivo " + despacho_file, w);
-       // DownloadFile(despacho_file, w);
-       // DeleteFile(despacho_file, w);
+        DownloadFile(despacho_file, w);
+        DeleteFile(despacho_file, w);
         Log("Leyendo archivo local", w);
-        using (StreamReader reader = new StreamReader(despacho_file))
-        {
-          
-          Log("Archivo leido", w);
-          while (!reader.EndOfStream)
+        try {
+          using (StreamReader reader = new StreamReader(conf["Carpeta"]+despacho_file))
           {
-            string linea = reader.ReadLine();
-            realizarAcciones(linea, w);
+            try {
+              Log("Archivo leido", w);
+              while (!reader.EndOfStream)
+              {
+                string linea = reader.ReadLine();
+                realizarAcciones(linea, w);
+              }
+            } catch (Exception e)
+            {
+              Log("Error: " + e.Message, w);
+            }
+          }
+        }catch(Exception e)
+        {
+          Log("Error: " + e.Message, w);
+        }
+        #endregion
+        #region despacho
+        Log("Inicio lectura de archivo de despachos.", w);
+        string error_file = "despachos" + Fechastr;
+        Program.Log("Buscando Archivo " + despacho_file, w);
+        DownloadFile(despacho_file, w);
+        DeleteFile(despacho_file, w);
+        Log("Leyendo archivo local", w);
+        try
+        {
+          using (StreamReader reader = new StreamReader(conf["Carpeta"] + despacho_file))
+          {
+            try
+            {
+              Log("Archivo leido", w);
+              while (!reader.EndOfStream)
+              {
+                string linea = reader.ReadLine();
+                realizarAcciones(linea, w);
+              }
+            }
+            catch (Exception e)
+            {
+              Log("Error: " + e.Message, w);
+            }
           }
         }
+        catch (Exception e)
+        {
+          Log("Error: " + e.Message, w);
+        }
+        #endregion
         w.Flush();
         w.Close();
         w.Dispose();
@@ -107,7 +147,7 @@ namespace interfaz.console.despachos
       foreach (PropertyInfo p in props)
       {
         if(p.Name != "Estado")
-        p.SetValue(ent,datos[cont]);
+        p.SetValue(ent,datos[cont],null);
         cont++;
       }
       ent.Estado = Estados.Preparacion;
@@ -123,45 +163,59 @@ namespace interfaz.console.despachos
     }
     static void DownloadFile(string Archivo, StreamWriter w)
     {
-      
+     
       FtpWebRequest request = (FtpWebRequest)WebRequest.Create(conf["FTP"]+Archivo);
       request.Method = WebRequestMethods.Ftp.DownloadFile;
-
+      FtpWebResponse response=null;
       // This example assumes the FTP site uses anonymous logon.
       request.Credentials = new NetworkCredential(conf["FTPUser"], conf["FTPPass"]);
-
-      FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-
-      Stream responseStream = response.GetResponseStream();
-      StreamReader reader = new StreamReader(responseStream);
-      using (StreamWriter wr = new StreamWriter(Archivo))
+      try
       {
-        while (!reader.EndOfStream)
-          wr.WriteLine(reader.ReadLine());
-        
-        wr.Flush();
-        wr.Close();
-        wr.Dispose();
-      }
-      Log("Download Complete, status " + response.StatusDescription, w);
+         response = (FtpWebResponse)request.GetResponse();
 
-      response.Close();
+        Stream responseStream = response.GetResponseStream();
+        StreamReader reader = new StreamReader(responseStream);
+        using (StreamWriter wr = new StreamWriter(conf["Carpeta"] + Archivo))
+        {
+          while (!reader.EndOfStream)
+            wr.WriteLine(reader.ReadLine());
+
+          wr.Flush();
+          wr.Close();
+          wr.Dispose();
+        }
+        Log("Download Complete, status " + response.StatusDescription, w);
+      }
+      catch (Exception e)
+      {
+        Log("Error:"+e.Message, w);
+      }
+      finally
+      {
+        if (response != null)
+          response.Close();
+      }
     }
     static void DeleteFile(string Archivo, StreamWriter w)
     {
-      NameValueCollection conf = ConfigurationManager.AppSettings;
+      try {
+        NameValueCollection conf = ConfigurationManager.AppSettings;
 
-      FtpWebRequest request = (FtpWebRequest)WebRequest.Create(conf["FTP"] + Archivo);
-      request.Method = WebRequestMethods.Ftp.DeleteFile;
+        FtpWebRequest request = (FtpWebRequest)WebRequest.Create(conf["FTP"] + Archivo);
+        request.Method = WebRequestMethods.Ftp.DeleteFile;
 
-      // This example assumes the FTP site uses anonymous logon.
-      request.Credentials = new NetworkCredential(conf["FTPUser"], conf["FTPPass"]);
+        // This example assumes the FTP site uses anonymous logon.
+        request.Credentials = new NetworkCredential(conf["FTPUser"], conf["FTPPass"]);
 
-      FtpWebResponse response = (FtpWebResponse)request.GetResponse();
+        FtpWebResponse response = (FtpWebResponse)request.GetResponse();
 
-      Log("Delete Complete, status " + response.StatusDescription, w);
+        Log("Delete Complete, status " + response.StatusDescription, w);
 
-      response.Close();
+        response.Close();
+      }catch(Exception ex)
+      {
+        Log("Error: " + ex.Message, w);
+      }
     }
   }
 }
