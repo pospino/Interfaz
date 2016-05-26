@@ -1,27 +1,23 @@
 using FluentData;
+using MoreLinq;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Configuration;
 using System.Linq;
 
 namespace interfaz.console
 {
-	public class Database : IDisposable
+  public class Database : IDisposable
 	{
 		private static IDbContext context;
+    public static IDbContext Context(string _Conexion)
+    {
+      
+        Database.context = (new DbContext()).ConnectionStringName(_Conexion, new MySqlProvider());
 
-		public static IDbContext Context
-		{
-			get
-			{
-				if (Database.context == null)
-				{
-					Database.context = (new DbContext()).ConnectionStringName("MySql", new MySqlProvider());
-				}
-				return Database.context;
-			}
-		}
+        return Database.context;
+      
+    }
 
 		static Database()
 		{
@@ -30,6 +26,7 @@ namespace interfaz.console
 
 		public Database()
 		{
+      
 		}
 
 		public void Dispose()
@@ -39,8 +36,13 @@ namespace interfaz.console
 				Database.context.Dispose();
 			}
 		}
+    public List<Pagos> getPagos()
+    {
+      List<Pagos> pagos = getPagos("MySql").Union(getPagos("VC_Mysql")).ToList();
+      return pagos;
+    }
 
-		public List<Pagos> getPagos()
+    public List<Pagos> getPagos(string _Conexion)
 		{
       DateTime now ;
       now = DateTime.Now.AddDays(double.Parse(ConfigurationManager.AppSettings["DiasPagos"]));
@@ -52,13 +54,19 @@ namespace interfaz.console
         " INNER JOIN ps_order_payment op ON o.reference = op.order_reference "+
         "  WHERE current_state  IN ( 2, 3, 4, 5 ) "+
         " AND date(o.date_add) = date(@dia) ";
-			List<Pagos> pagos = Database.Context.Sql(str, new object[0])
+			List<Pagos> pagos = Database.Context(_Conexion).Sql(str, new object[0])
                 .Parameter("dia", now,parameterType: DataTypes.Date)
                 .QueryMany<Pagos>(null);
-			return pagos;
+      return pagos;
 		}
 
-		public List<Pedidos> getPedidos()
+    public List<Pedidos> getPedidos()
+    {
+      List<Pedidos> pedidos = getPedidos("MySql");
+      List<Pedidos> pedidosVC = getPedidos("VC_MySql");
+      return pedidos.Union(pedidosVC).ToList();
+    }
+		public List<Pedidos> getPedidos(string _Conexion)
 		{
 			string str;
 			Pedidos pedido;
@@ -66,19 +74,19 @@ namespace interfaz.console
 			int num;
       DateTime now = DateTime.Now.AddDays(double.Parse(ConfigurationManager.AppSettings["DiasPedidos"]));
       string str1 = 
-                " SELECT o.id_cart 'reference',  'Z029' clasepedido,  'CO19'ov,  'EC'cdistribucion,  'PD'sector,  "+
+                " SELECT o.id_cart 'reference',     'EC' cdistribucion,  'PD' sector,  "+
                 " 'PN'timpuesto,   'CC'tidentificacion, CONCAT( a.firstname,  ' ', a.lastname ) nombre, a.address1, 'CO' pais, "+
-                " a.city,  'COP'moneda,  a.dni identificacion,'' codigo,  0 posicion, p.reference material,  'CO24' centro, "+
+                " a.city,  'COP'moneda,  a.dni identificacion,'' codigo,  0 posicion, p.reference material,   "+
                 " 'ruta' ruta,  ROUND(p.price) unitario, od.product_quantity cantidad, od.reduction_percent descuento,  "+
                 " DATE( o.date_add ) fecha, o.total_shipping_tax_excl flete  "+
                 " FROM ps_orders o  INNER JOIN ps_address a ON o.id_address_invoice = a.id_address "+
                 " INNER JOIN ps_country_lang cl ON a.id_country = cl.id_country AND cl.id_lang =1  "+
                 " INNER JOIN ps_order_detail od ON o.id_order = od.id_order "+
                 " INNER JOIN ps_product p ON p.id_product = od.product_id "+
-                " WHERE o.current_state IN ( 12, 2 )   "+
+                " WHERE o.current_state IN ( 12, 2,4 )   "+
                 " AND date(o.date_add) = date(@dias) ";
-			List<Pedidos> pedidos = Database.Context.Sql(str1, new object[0])
-                .Parameter("dias", now,parameterType: DataTypes.Date)
+      List<Pedidos> pedidos = Database.Context(_Conexion).Sql(str1, new object[0])
+                .Parameter("dias", now, parameterType: DataTypes.Date)
                 .QueryMany<Pedidos>(null);
 			List<Pedidos> pedidos1 = new List<Pedidos>();
             string sql_referencia = " SELECT price FROM  `ps_product` WHERE reference =  @referencia ";
@@ -119,7 +127,7 @@ namespace interfaz.console
 						num1 = num4 + 1;
 						pedido.posicion = num4;
 					}
-                    pedido.unitario = Database.Context.Sql(sql_referencia, new object[0])
+                    pedido.unitario = Database.Context(_Conexion).Sql(sql_referencia, new object[0])
                         .Parameter("referencia", pedido.material)
                         .QuerySingle<double>();
 					pedidos1.Add(pedido);
@@ -152,7 +160,7 @@ namespace interfaz.console
                             num1 = num6 + 1;
                             pedido.posicion = num6;
                         }
-                        pedido.unitario = Database.Context.Sql(sql_referencia, new object[0])
+                        pedido.unitario = Database.Context(_Conexion).Sql(sql_referencia, new object[0])
                             .Parameter("referencia", pedido.material)
                             .QuerySingle<double>();
                         pedidos1.Add(pedido);
@@ -163,7 +171,7 @@ namespace interfaz.console
 					pedido = (Pedidos)pedido1.Clone();
 					pedido.cantidad = 1;
 					pedido.descuento = 0;
-					pedido.material = "617000028";
+					pedido.material = ConfigurationManager.AppSettings["FleteIVA"];
 					int num7 = num1;
 					num1 = num7 + 1;
 					pedido.posicion = num7;
@@ -172,6 +180,16 @@ namespace interfaz.console
 				}
 				
 			}
+      var distinct = pedidos1.DistinctBy(x => x.reference);
+      foreach(var d in distinct)
+      {
+        int pos = 1;
+        pedidos1.Where(x => x.reference == d.reference).ForEach(y =>
+          {
+            y.posicion = pos;
+            pos++;
+          });
+      }
 			return pedidos1;
 		}
 	}

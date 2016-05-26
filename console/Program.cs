@@ -73,20 +73,24 @@ namespace interfaz.console
 			int count;
 			StreamWriter streamWriter;
 			DateTime now = DateTime.Now;
-			string str = string.Concat(now.ToString("yyyyMMdd"), ".txt");
-			StreamWriter streamWriter1 = File.AppendText(
-        string.Concat(ConfigurationManager.AppSettings["Carpeta"],"log", str));
+      string str = string.Concat(now.ToString("yyyyMMdd"), ".txt");
+      string path = string.Concat(ConfigurationManager.AppSettings["Carpeta"], "log", str);
+      if (!File.Exists(path))
+      {
+        File.Create(path);
+      }
+        StreamWriter streamWriter1 = File.AppendText(path);
 			try
 			{
 				try
 				{
 					Program.Log("Inicio", streamWriter1);
 					Database database = new Database();
-					try
+          try
 					{
 						Program.Log("Inicio de la consulta de pagos.", streamWriter1);
 						List<Pagos> pagos = database.getPagos();
-						count = pagos.Count;
+            count = pagos.Count;
 						Program.Log(string.Concat("Se ejecuto la consulta de pagos, se obtuvieron ", count, " registros."), streamWriter1);
 						//if (count != 0)
 						{

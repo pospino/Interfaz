@@ -62,8 +62,8 @@ namespace interfaz.console
         {
             get
             {
-                return "1105050101";
-            }
+                return ConfigurationManager.AppSettings["Cuenta"];
+      }
         }
         public double neto
         {
